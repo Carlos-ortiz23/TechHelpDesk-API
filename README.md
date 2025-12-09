@@ -68,8 +68,8 @@ TechHelpDesk-API/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/tu-usuario/techhelpdesk-api.git
-cd techhelpdesk-api
+git clone https://github.com/Carlos-ortiz23/TechHelpDesk-API.git
+cd TechHelpDesk-API
 ```
 
 ### 2. Install dependencies
