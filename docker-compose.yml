@@ -1,0 +1,75 @@
+services:
+  # NestJS API
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ${API_CONTAINER_NAME}
+    working_dir: /app
+    restart: unless-stopped
+    ports:
+      - "${PORT}:8080"
+    volumes:
+      - .:/app
+      - ./.env:/app/.env
+      - /app/node_modules
+    env_file:
+      - ./.env
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_DATABASE=${DB_DATABASE}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+      - PORT=${PORT}
+    depends_on:
+      db:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "${API_CPU_LIMIT:-1}"
+          memory: ${API_MEM_LIMIT:-512M}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:${PORT}/api"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - backend
+
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: ${DB_CONTAINER_NAME}
+    restart: always
+    ports:
+      - "${DB_PORT}:5432"
+    environment:
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_DATABASE}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: "${DB_CPU_LIMIT:-0.5}"
+          memory: ${DB_MEM_LIMIT:-256M}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+volumes:
+  db_data:
+
+networks:
+  backend:
+    driver: bridge
